@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record TransactionRequestDTO(
-        @NotNull
+
         @NotBlank
         TransactionsType type,
 
