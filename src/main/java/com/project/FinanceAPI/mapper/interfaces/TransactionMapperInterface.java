@@ -13,4 +13,6 @@ public interface TransactionMapperInterface {
     Transaction toTransaction(TransactionRequestDTO dto, Account account, Category category);
 
     TransactionResponseDTO toResponseDTO(Transaction entity);
+
+    List<TransactionResponseDTO> toResponseListDTO(List<Transaction> transactions);
 }

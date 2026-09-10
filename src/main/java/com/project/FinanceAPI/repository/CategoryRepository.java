@@ -9,10 +9,13 @@ import java.util.UUID;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
-    Optional<Category> findByNameAndUserId(String name, UUID userID);
+    Optional<Category> findByUserIdAndName(UUID userId, String name);
 
     List<Category> findAllByUserId(UUID userId);
 
-    boolean existsByNameAndUserId(String name, UUID userId);
+    boolean existsByUserIdAndName(UUID userId, String name);
 
+    boolean existsByUserIdAndNameAndIdNot(UUID userId, UUID categoryId, String name);
+
+    Optional<Category> findByUserIdAndId(UUID userId, UUID categoryId);
 }
