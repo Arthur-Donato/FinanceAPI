@@ -2,9 +2,8 @@ package com.project.FinanceAPI.services;
 
 import com.project.FinanceAPI.DTOs.request.AccountRequestDTO;
 import com.project.FinanceAPI.DTOs.response.AccountResponseDTO;
-import com.project.FinanceAPI.exceptions.AccountNotFoundException;
 import com.project.FinanceAPI.exceptions.DuplicationResourceException;
-import com.project.FinanceAPI.exceptions.UserNotFoundException;
+import com.project.FinanceAPI.exceptions.ResourceNotFoundException;
 import com.project.FinanceAPI.mapper.implementations.AccountMapper;
 import com.project.FinanceAPI.model.entities.Account;
 import com.project.FinanceAPI.model.entities.User;
@@ -26,37 +25,44 @@ public class AccountService {
 
     private final AccountMapper accountMapper;
 
-    public AccountResponseDTO createAccount(AccountRequestDTO accountDto, UUID userId) {
+    public AccountResponseDTO createAccount(UUID userId, AccountRequestDTO accountDto) {
         User user = this.getUserEntityById(userId);
 
-        List<Account> accounts = user.getAccounts();
+       if(this.accountRepository.existsByUserIdAndName(userId, accountDto.name())) {
+           throw new DuplicationResourceException("This user already have an account with this name.");
+       }
 
-        boolean existsAccount= accounts.stream()
-                .anyMatch(account -> accountDto.name().equals(account.getName()));
+       Account account = this.accountMapper.toAccount(accountDto, user);
 
-        if(existsAccount){
-            throw new DuplicationResourceException("This account name has already exists.");
-        }
+       Account accountSaved = this.accountRepository.save(account);
 
-        Account accountSaved = this.accountRepository.save(this.accountMapper.toAccount(accountDto, user));
-
-        return this.accountMapper.toResponseDTO(accountSaved);
+       return this.accountMapper.toResponseDTO(accountSaved);
     }
 
-    public List<AccountResponseDTO> getAllAccounts() {
-        List<Account> accounts = this.accountRepository.findAll();
+    public List<AccountResponseDTO> getAllAccountsByUserId(UUID userId) {
+        List<Account> accounts = this.accountRepository.findAllByUserId(userId);
 
         return this.accountMapper.toResponseDTOList(accounts);
     }
 
-    public AccountResponseDTO getOneAccountById(UUID accountId) {
-        Account account = this.getAccountEntityById(accountId);
+    public AccountResponseDTO getAccountByIdAndUserId(UUID userId, UUID accountId) {
+        Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
         return this.accountMapper.toResponseDTO(account);
     }
 
-    public AccountResponseDTO updateAccount(UUID accountId, AccountRequestDTO updateRequestDto) {
-        Account account = this.getAccountEntityById(accountId);
+    public AccountResponseDTO getAccountByNameAndUserId(UUID userId, String name) {
+        Account account = this.getAccountEntityByUserIdAndName(userId, name);
+
+        return this.accountMapper.toResponseDTO(account);
+    }
+
+    public AccountResponseDTO updateAccount(UUID userId, UUID accountId, AccountRequestDTO updateRequestDto) {
+        Account account = this.getAccountEntityByUserIdAndId(accountId, userId);
+
+        if(this.accountRepository.existsByUserIdAndNameAndIdNot(userId, accountId, updateRequestDto.name())) {
+            throw new DuplicationResourceException("This user already have an account with this name.");
+        }
 
         account.setName(updateRequestDto.name());
 
@@ -65,20 +71,25 @@ public class AccountService {
         return this.accountMapper.toResponseDTO(accountUpdated);
     }
 
-    public void deleteAccount(UUID accountId){
-        Account account = this.getAccountEntityById(accountId);
+    public void deleteAccount(UUID userId, UUID accountId){
+        Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
         this.accountRepository.delete(account);
     }
 
 
-    private Account getAccountEntityById(UUID accountId) {
-        return this.accountRepository.findById(accountId)
-                .orElseThrow(AccountNotFoundException::new);
+    private Account getAccountEntityByUserIdAndId(UUID userId, UUID accountId) {
+        return this.accountRepository.findByUserIdAndId(userId, accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found."));
     }
 
     private User getUserEntityById(UUID userId) {
         return this.userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+    }
+
+    private Account getAccountEntityByUserIdAndName(UUID userId, String name) {
+        return this.accountRepository.findByUserIdAndName(userId, name)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with this parameters."));
     }
 }

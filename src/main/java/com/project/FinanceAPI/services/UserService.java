@@ -7,7 +7,7 @@ import com.project.FinanceAPI.DTOs.request.UserUpdateRequestDTO;
 import com.project.FinanceAPI.DTOs.response.UserResponseDTO;
 import com.project.FinanceAPI.exceptions.DuplicationResourceException;
 import com.project.FinanceAPI.exceptions.InvalidCredentialsException;
-import com.project.FinanceAPI.exceptions.UserNotFoundException;
+import com.project.FinanceAPI.exceptions.ResourceNotFoundException;
 import com.project.FinanceAPI.mapper.implementations.UserMapper;
 import com.project.FinanceAPI.model.entities.User;
 import com.project.FinanceAPI.repository.UserRepository;
@@ -55,10 +55,13 @@ public class UserService {
         return this.userMapper.toResponseDTO(user);
     }
 
-    public UserResponseDTO updateUser(UserUpdateRequestDTO updateDTO, UUID userId) {
+    public UserResponseDTO updateUser(UUID userId, UserUpdateRequestDTO updateDTO) {
         User user = this.getUserEntityById(userId);
 
-        if(updateDTO.email() != null && !updateDTO.email().isBlank()) {
+        if(updateDTO.email() != null && !updateDTO.email().isBlank() && !user.getEmail().equals(updateDTO.email())) {
+            if(this.userRepository.existsByEmailAndIdNot(updateDTO.email(), userId)) {
+                throw new DuplicationResourceException("This email already exists.");
+            }
             user.setEmail(updateDTO.email());
         }
 
@@ -71,11 +74,15 @@ public class UserService {
         return this.userMapper.toResponseDTO(userUpdated);
     }
 
-    public UserResponseDTO changePassword(ChangePasswordRequestDTO passwordDto, UUID userId) {
+    public UserResponseDTO changePassword(UUID userId, ChangePasswordRequestDTO passwordDto) {
         User user = this.getUserEntityById(userId);
 
         if(!this.passwordEncoder.matches(passwordDto.currentPassword(), user.getPassword())){
             throw new InvalidCredentialsException("Your current password is incorrect.");
+        }
+
+        if(this.passwordEncoder.matches(passwordDto.newPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Your new password cannot be the same as your current password");
         }
 
         user.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
@@ -91,16 +98,20 @@ public class UserService {
         this.userRepository.delete(user);
     }
 
-    public boolean verifyLogin(LoginRequestDTO loginDto) {
+    public UserResponseDTO verifyLogin(LoginRequestDTO loginDto) {
         User user = this.userRepository.findByEmail(loginDto.email())
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new InvalidCredentialsException("Email or password invalid."));
 
-        return this.passwordEncoder.matches(loginDto.password(), user.getPassword());
+        if(!this.passwordEncoder.matches(loginDto.password(), user.getPassword())){
+            throw new InvalidCredentialsException("Email or password invalid.");
+        }
+
+        return this.userMapper.toResponseDTO(user);
     }
 
     private User getUserEntityById(UUID userId) {
         return this.userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
     }
 
 }

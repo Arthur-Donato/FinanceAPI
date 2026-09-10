@@ -46,4 +46,15 @@ public class TransactionMapper implements TransactionMapperInterface {
                 entity.getCreated_at()
         );
     }
+
+    @Override
+    public List<TransactionResponseDTO> toResponseListDTO(List<Transaction> transactions) {
+        if(transactions == null) {
+            return null;
+        }
+
+        return transactions.stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
 }
