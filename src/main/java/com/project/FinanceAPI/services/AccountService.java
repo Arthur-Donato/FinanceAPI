@@ -45,7 +45,7 @@ public class AccountService {
         return this.accountMapper.toResponseDTOList(accounts);
     }
 
-    public AccountResponseDTO getAccountByIdAndUserId(UUID userId, UUID accountId) {
+    public AccountResponseDTO getAccountByUserIdAndId(UUID userId, UUID accountId) {
         Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
         return this.accountMapper.toResponseDTO(account);
