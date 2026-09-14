@@ -5,6 +5,6 @@ CREATE TABLE category(
     created_at TIMESTAMP DEFAULT now(),
 
     CONSTRAINT CATEGORIES_PK PRIMARY KEY (category_id),
-    CONSTRAINT CATEGORIES_FK FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE,
+    CONSTRAINT CATEGORIES_FK FOREIGN KEY (user_id) REFERENCES "users"(user_id) ON DELETE CASCADE,
     CONSTRAINT uq_category_user_name UNIQUE (name, user_id)
 );
