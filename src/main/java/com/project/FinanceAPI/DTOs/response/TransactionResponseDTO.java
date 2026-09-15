@@ -13,8 +13,8 @@ public record TransactionResponseDTO(
         String description,
         LocalDate date,
         BigDecimal value,
-        UUID accountId,
-        UUID categoryId,
+        String accountName,
+        String categoryName,
         LocalDateTime created_at
 ) {
 }

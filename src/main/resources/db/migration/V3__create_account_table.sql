@@ -5,6 +5,6 @@ CREATE TABLE account(
     created_at TIMESTAMP DEFAULT now(),
 
     CONSTRAINT ACCOUNT_PK PRIMARY KEY (account_id),
-    CONSTRAINT ACCOUNT_FK FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE,
+    CONSTRAINT ACCOUNT_FK FOREIGN KEY (user_id) REFERENCES "users"(user_id) ON DELETE CASCADE,
     CONSTRAINT uq_account_user_name UNIQUE (user_id, name)
 );

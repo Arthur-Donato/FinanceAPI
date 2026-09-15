@@ -45,7 +45,7 @@ public class AccountService {
         return this.accountMapper.toResponseDTOList(accounts);
     }
 
-    public AccountResponseDTO getAccountByIdAndUserId(UUID userId, UUID accountId) {
+    public AccountResponseDTO getAccountByUserIdAndId(UUID userId, UUID accountId) {
         Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
         return this.accountMapper.toResponseDTO(account);
@@ -58,9 +58,9 @@ public class AccountService {
     }
 
     public AccountResponseDTO updateAccount(UUID userId, UUID accountId, AccountRequestDTO updateRequestDto) {
-        Account account = this.getAccountEntityByUserIdAndId(accountId, userId);
+        Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
-        if(this.accountRepository.existsByUserIdAndNameAndIdNot(userId, accountId, updateRequestDto.name())) {
+        if(this.accountRepository.existsByUserIdAndIdNotAndName(userId, accountId, updateRequestDto.name())) {
             throw new DuplicationResourceException("This user already have an account with this name.");
         }
 

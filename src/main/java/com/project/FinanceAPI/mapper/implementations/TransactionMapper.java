@@ -41,8 +41,8 @@ public class TransactionMapper implements TransactionMapperInterface {
                 entity.getDescription(),
                 entity.getDate(),
                 entity.getValue(),
-                entity.getAccount().getId(),
-                entity.getCategory().getId(),
+                entity.getAccount().getName(),
+                entity.getCategory().getName(),
                 entity.getCreated_at()
         );
     }
