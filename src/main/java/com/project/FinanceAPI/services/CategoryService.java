@@ -60,7 +60,7 @@ public class CategoryService {
     public CategoryResponseDTO updateCategory(UUID userId, UUID categoryId, CategoryRequestDTO updateRequestDto) {
         Category category = this.getCategoryEntityByUserIdAndId(userId, categoryId);
 
-        if(this.categoryRepository.existsByUserIdAndNameAndIdNot(userId, categoryId, updateRequestDto.name())) {
+        if(this.categoryRepository.existsByUserIdAndIdNotAndName(userId, categoryId, updateRequestDto.name())) {
             throw new DuplicationResourceException("This user already have one category with this name.");
         }
 

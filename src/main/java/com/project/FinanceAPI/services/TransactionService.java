@@ -12,11 +12,16 @@ import com.project.FinanceAPI.model.entities.Transaction;
 import com.project.FinanceAPI.repository.AccountRepository;
 import com.project.FinanceAPI.repository.CategoryRepository;
 import com.project.FinanceAPI.repository.TransactionRepository;
+import com.project.FinanceAPI.specification.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +35,10 @@ public class TransactionService {
 
     private final CategoryRepository categoryRepository;
 
-    public TransactionResponseDTO createTransaction(UUID userId, TransactionRequestDTO transactionRequestDTO) {
+    public TransactionResponseDTO createTransaction(UUID userId, UUID accountId, TransactionRequestDTO transactionRequestDTO) {
         Category category = this.getCategoryEntityByUserIdAndId(userId, transactionRequestDTO.categoryId());
 
-        Account account = this.getAccountEntityByUserIdAndId(userId, transactionRequestDTO.accountId());
+        Account account = this.getAccountEntityByUserIdAndId(userId, accountId);
 
         Transaction transaction = this.transactionMapper.toTransaction(transactionRequestDTO, account, category);
 
@@ -42,8 +47,20 @@ public class TransactionService {
         return this.transactionMapper.toResponseDTO(transactionSaved);
     }
 
-    public List<TransactionResponseDTO> getAllTransactionByUserId(UUID userId){
-        List<Transaction> transactions = this.transactionRepository.findAllByAccountUserId(userId);
+    public List<TransactionResponseDTO> getAllTransactions(UUID userId, UUID accountId, UUID categoryId, String type,
+                                                           LocalDate startDate, LocalDate endDate){
+
+        List<Specification<Transaction>> specs = Stream.of(
+                TransactionSpecification.hasUserId(userId),
+                TransactionSpecification.hasAccountId(accountId),
+                TransactionSpecification.hasCategoryId(categoryId),
+                TransactionSpecification.hasType(type),
+                TransactionSpecification.hasDateBetween(startDate, endDate)
+        ).filter(Objects::nonNull).toList();
+
+        Specification<Transaction> spec = Specification.allOf(specs);
+
+        List<Transaction> transactions = this.transactionRepository.findAll(spec);
 
         return this.transactionMapper.toResponseListDTO(transactions);
     }
@@ -57,8 +74,11 @@ public class TransactionService {
     public TransactionResponseDTO updateTransaction(UUID userId, UUID transactionId, TransactionUpdateRequestDTO updateRequestDTO) {
         Transaction transaction = this.getTransactionEntityByUserIdAndId(userId, transactionId);
 
-        Category category = this.getCategoryEntityByUserIdAndId(updateRequestDTO.categoryId(), userId);
-        transaction.setCategory(category);
+        if(updateRequestDTO.categoryId() != null) {
+            Category category = this.getCategoryEntityByUserIdAndId(updateRequestDTO.categoryId(), userId);
+            transaction.setCategory(category);
+
+        }
 
         if(updateRequestDTO.type() != null) {
             transaction.setType(updateRequestDTO.type());
