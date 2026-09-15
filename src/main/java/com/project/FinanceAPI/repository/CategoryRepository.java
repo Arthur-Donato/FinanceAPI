@@ -15,7 +15,7 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     boolean existsByUserIdAndName(UUID userId, String name);
 
-    boolean existsByUserIdAndNameAndIdNot(UUID userId, UUID categoryId, String name);
+    boolean existsByUserIdAndIdNotAndName(UUID userId, UUID categoryId, String name);
 
     Optional<Category> findByUserIdAndId(UUID userId, UUID categoryId);
 }
